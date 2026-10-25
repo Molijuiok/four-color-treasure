@@ -1,0 +1,465 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>四色寻宝 · 完整版</title>
+<style>
+:root{--bg:#0b1020;--panel:#171f33;--panel2:#222d48;--line:#3a4969;--text:#f4f6ff;--muted:#aab6d0;--accent:#9a86ff}
+*{box-sizing:border-box}body{margin:0;background:radial-gradient(ellipse at top,#2b2851 0,#11172a 50%,#090d17 100%);color:var(--text);font-family:system-ui,-apple-system,"Segoe UI",sans-serif;min-height:100vh}
+main{max-width:1240px;margin:auto;padding:22px 15px 40px}header{text-align:center;margin-bottom:18px}h1{font-size:clamp(27px,4vw,42px);margin:0 0 7px}header p{color:var(--muted);margin:0;font-size:14px}
+button{border:0;border-radius:11px;padding:10px 14px;font-weight:750;cursor:pointer;transition:.16s}button:hover:not(:disabled){filter:brightness(1.12);transform:translateY(-1px)}button:disabled{opacity:.4;cursor:not-allowed}.primary{background:linear-gradient(135deg,#a99aff,#6c55dc);color:#fff}.secondary{background:#293651;color:#eef1ff;border:1px solid #465678}.danger{background:#59354a;color:#ffe6ef;border:1px solid #8d526c}
+.toolbar{display:flex;gap:9px;justify-content:center;flex-wrap:wrap;margin:17px 0}
+.layout{display:grid;grid-template-columns:minmax(0,1fr) 300px;gap:17px;align-items:start}.areas{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:13px}
+.area-card{background:linear-gradient(150deg,#202a43,#171e30);border:1px solid var(--line);border-radius:16px;padding:12px;cursor:pointer;box-shadow:0 9px 24px #0002;transition:.18s}.area-card:hover{transform:translateY(-2px);border-color:#7c82b4}.area-card.selected{border:2px solid #a99aff;padding:11px;box-shadow:0 0 0 3px #9a86ff22}.area-card.opened{border-color:#478c72;cursor:default}
+.area-card h2{font-size:17px;margin:0 0 4px;display:flex;justify-content:space-between;align-items:center}.desc{font-size:12px;color:var(--muted);margin-bottom:10px}.badge{font-size:11px;border-radius:99px;padding:4px 8px;background:#35304f;color:#e0d9ff}
+.grid{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));grid-template-rows:repeat(5,minmax(0,1fr));gap:4px;aspect-ratio:1}.cell{background:#2b354c;border:1px solid #3e4b68;border-radius:5px;min-width:0;min-height:0}
+.item{position:relative;border-radius:5px;display:flex;align-items:center;justify-content:center;font-size:clamp(9px,1.45vw,14px);font-weight:900;box-shadow:inset 0 1px #ffffff66,inset 0 -2px #0002;overflow:hidden}.white{background:#f2f4f8;color:#30394b;border:1px solid white}.green{background:#36c982;color:#063f29;border:1px solid #72f2b1}.purple{background:#9a70f4;color:#fff;border:1px solid #c0a7ff}.gold{background:linear-gradient(135deg,#fff0a0,#f2c34f,#d89b18);color:#5b3b00;border:1px solid #fff0a8}
+.item-art{display:flex;flex-direction:column;align-items:center;justify-content:center;gap:1px;width:100%;height:100%;font-size:clamp(13px,2.4vw,25px);line-height:1;text-shadow:0 1px 2px #0002}.item-art small{font-size:clamp(7px,1vw,10px);font-weight:800;text-shadow:none}.item.hidden{background:linear-gradient(135deg,#505b7c,#2f3a56)!important;color:transparent!important;border:1px solid #8490b4!important}.item.hidden:after{content:"?";position:absolute;color:#fff;font-size:clamp(15px,2.3vw,25px);text-shadow:0 2px 5px #0007}
+.item.reveal{animation:reveal .42s ease both}.item.gold.reveal{animation:goldBurst .85s ease both;box-shadow:0 0 8px #ffcf54,inset 0 1px #fff9,inset 0 -2px #0002}
+@keyframes reveal{0%{transform:scale(.45) rotateY(90deg);opacity:.1}65%{transform:scale(1.08) rotateY(-8deg)}100%{transform:scale(1);opacity:1}}
+@keyframes goldBurst{0%{transform:scale(.35) rotate(-12deg);filter:brightness(2);box-shadow:0 0 0 #ffdb66}45%{transform:scale(1.18) rotate(5deg);filter:brightness(1.5);box-shadow:0 0 28px 8px #ffd45c}100%{transform:scale(1);filter:brightness(1);box-shadow:0 0 10px #ffcf54}}
+.side,.panel{background:var(--panel);border:1px solid var(--line);border-radius:16px;padding:16px}.side{position:sticky;top:12px}.side h3,.panel h2{margin:0 0 10px}.muted{color:var(--muted);font-size:13px;line-height:1.6}.stats{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.stat{background:#242e46;border-radius:10px;padding:10px}.stat strong{font-size:20px;display:block}.stat small{color:var(--muted)}.result{background:#252f49;border:1px solid #394766;border-radius:12px;padding:12px;line-height:1.7;font-size:13px;min-height:84px;margin-top:10px}.big{font-size:24px;color:#ffe18a;font-weight:950}.legend{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin:12px 0}.legend span{display:flex;align-items:center;gap:7px;font-size:13px}.dot{width:14px;height:14px;border-radius:4px;display:inline-block}
+.section{border-top:1px solid var(--line);padding-top:12px;margin-top:13px}.section ul{padding-left:18px;color:var(--muted);font-size:12px;line-height:1.7;margin-bottom:0}.history{max-height:150px;overflow:auto;font-size:12px;color:var(--muted);line-height:1.7}.history div{border-bottom:1px solid #2c3751;padding:4px 0}
+.panels{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:14px;margin-top:18px}.panel h2{font-size:19px}.panel h3{font-size:15px;margin:12px 0 7px}.shop-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:9px}.shop-item{background:#232e47;border:1px solid #394967;border-radius:12px;padding:11px}.shop-item strong{display:block}.shop-item p{font-size:12px;color:var(--muted);min-height:35px;margin:5px 0 9px;line-height:1.5}.shop-item button{width:100%;padding:8px}.inventory{display:flex;gap:7px;flex-wrap:wrap;margin-top:9px}.pill{background:#2c3854;border:1px solid #465678;border-radius:99px;padding:5px 9px;font-size:12px}
+.king-overlay{position:fixed;inset:0;z-index:50;background:#080c16eF;display:none;overflow:auto;padding:20px}.king-overlay.active{display:block}.king-modal{max-width:1000px;margin:2vh auto;background:#171f32;border:1px solid #5b6590;border-radius:20px;padding:20px;box-shadow:0 20px 80px #0009}.king-head{display:flex;justify-content:space-between;gap:12px;align-items:center;flex-wrap:wrap}.king-cards{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:12px;margin:18px 0}.king-card{background:linear-gradient(150deg,#293755,#1b2439);border:2px solid #475777;border-radius:15px;padding:14px;text-align:center;min-height:150px;color:#fff}.king-card:not(:disabled){cursor:pointer}.king-card.chosen{border-color:#ffe17c;box-shadow:0 0 0 3px #ffe17c30}.king-card .king-icon{font-size:32px}.king-card .king-score{font-size:25px;font-weight:900;color:#ffe18a;margin-top:8px}.king-card:disabled{cursor:default;opacity:1}.king-result{background:#252f49;border-radius:12px;padding:14px;line-height:1.8;min-height:65px}.king-final{font-size:24px;font-weight:900;color:#ffe18a;margin:12px 0}.fixed-art-note{font-size:12px;color:#b9c3dc;line-height:1.6}
+.mode-buttons{display:flex;gap:8px;flex-wrap:wrap;justify-content:center}
+.transform-grid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px;width:min(78vw,440px);aspect-ratio:1;margin:20px auto}
+.transform-cell{display:flex;align-items:center;justify-content:center;flex-direction:column;gap:5px;background:linear-gradient(145deg,#283653,#151e31);border:2px solid #536588;border-radius:16px;font-size:clamp(32px,8vw,66px);min-width:0;min-height:0}
+.transform-cell small{font-size:12px;color:#c3cde4}
+.transform-cell.picked{border-color:#ffe17c;background:linear-gradient(145deg,#534a3b,#292640);box-shadow:0 0 18px #ffe17c44}
+.transform-result{display:flex;align-items:center;justify-content:center;gap:12px;flex-wrap:wrap;width:min(78vw,440px);aspect-ratio:1;margin:20px auto;border:2px dashed #65739b;border-radius:16px;background:radial-gradient(circle,#41466d,#1a2237);overflow:hidden}
+.fusion-library{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:10px;margin-top:14px}.fusion-entry{display:flex;align-items:center;gap:10px;text-align:left;background:#202b43;border:1px solid #536588;border-radius:12px;padding:10px;color:#fff}.fusion-entry .fusion-symbol{font-size:28px;min-width:36px;text-align:center}.fusion-entry small{display:block;color:#c3cde4;line-height:1.5}.transform-result .fused-icon{font-size:clamp(70px,17vw,145px);filter:drop-shadow(0 0 18px #b8a6ff);animation:fuseIn .75s cubic-bezier(.2,.8,.2,1) both}
+.transform-result .fused-icon+ .fused-icon{margin-left:-28px;animation-delay:.12s}
+@keyframes fuseIn{0%{transform:scale(.1) rotate(-35deg);opacity:0}65%{transform:scale(1.2) rotate(7deg)}100%{transform:scale(1);opacity:1}}
+.settings{margin-top:15px;background:var(--panel);border:1px solid var(--line);border-radius:15px;padding:14px}.settings summary{font-weight:750;cursor:pointer}.prob-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:9px;margin-top:12px}.prob-grid label{font-size:12px;color:var(--muted);display:flex;flex-direction:column;gap:5px}.prob-grid input,.field input,.field select{width:100%;min-width:0;background:#0e1525;border:1px solid #465678;border-radius:8px;color:white;padding:8px}.field{display:flex;flex-direction:column;gap:5px;color:var(--muted);font-size:12px;margin:8px 0}.fields{display:grid;grid-template-columns:1fr 1fr;gap:8px}.wide{grid-column:1/-1}.note{font-size:12px;color:var(--muted);line-height:1.6}canvas{width:100%;height:220px;background:#101727;border:1px solid #34415e;border-radius:10px;margin-top:8px}.sim-results{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-top:9px}.sim-results .stat strong{font-size:16px}.check{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--muted);margin:10px 0}.check input{accent-color:#9a86ff}
+footer{text-align:center;color:#74809c;font-size:12px;margin-top:22px}
+@media(max-width:850px){.layout{grid-template-columns:1fr}.side{position:static}.panels{grid-template-columns:1fr}}
+@media(max-width:600px){.king-cards{grid-template-columns:repeat(2,minmax(0,1fr))}.king-modal{padding:12px}.king-overlay{padding:8px}}@media(max-width:460px){main{padding:17px 9px 30px}.areas{grid-template-columns:1fr}.prob-grid{grid-template-columns:repeat(2,1fr)}.shop-grid{grid-template-columns:1fr 1fr}.panel{padding:12px}.sim-results{grid-template-columns:1fr 1fr}}
+</style>
+</head>
+<body>
+<main>
+<header><h1>✨ 四色寻宝 · 完整挑战版</h1><p>四个神秘区域 · 稀有特效 · 金币商店 · 概率模拟 · 自动保存 · 多局挑战</p></header>
+<div class="toolbar">
+<button class="primary" id="openBtn" disabled>🎁 开启所选区域</button>
+<button class="secondary" id="newRound">🔄 新的一局</button>
+<button class="secondary" id="saveNow">💾 立即保存</button>
+<button class="primary" id="openKingMode">👑 谁是运气王</button>
+<button class="primary" id="openTransformMode">🪄 移形换影</button>
+<button class="danger" id="resetAll">重置全部进度</button>
+</div>
+<div class="layout">
+<section class="areas" id="areas"></section>
+<aside class="side">
+<h3>🏆 玩家面板</h3><p class="muted">选择一个未开启的区域，揭晓所有物品并领取积分与金币。每局只能开启一个区域。</p>
+<div class="stats">
+<div class="stat"><strong id="totalScore">0</strong><small>累计积分</small></div>
+<div class="stat"><strong id="coins">100</strong><small>金币余额</small></div>
+<div class="stat"><strong id="roundCount">0</strong><small>已完成局数</small></div>
+<div class="stat"><strong id="bestScore">0</strong><small>单局最高分</small></div>
+</div>
+<div class="result" id="result">选择一个区域，然后开启宝藏。首次游玩赠送 100 金币。</div>
+<div class="section"><h3>🎨 颜色概率</h3><div class="legend"><span><i class="dot white"></i>白色 50%</span><span><i class="dot green"></i>绿色 30%</span><span><i class="dot purple"></i>紫色 15%</span><span><i class="dot gold"></i>金色 5%</span></div></div>
+<div class="section"><h3>💎 积分规则</h3><ul><li>白色：每格 1 分</li><li>绿色：每格 3 分</li><li>紫色：每格 8 分</li><li>金色：每格 20 分</li><li>物品积分 = 颜色分值 × 占用格数</li><li>基础金币奖励：每局获得的积分 ÷ 10，向下取整</li></ul></div>
+<div class="section"><h3>📜 最近记录</h3><div class="history" id="history">暂无记录</div></div>
+<div class="section"><h3>🎒 当前道具</h3><div class="inventory" id="inventory"></div></div>
+</aside>
+</div>
+
+<div class="panels">
+<section class="panel">
+<h2>🛒 B · 道具商店</h2><p class="muted">使用金币购买道具。购买后可在之后的局数中使用，部分道具会永久生效。</p>
+<div class="shop-grid" id="shop"></div>
+<h3>已拥有道具</h3><div class="inventory" id="owned"></div>
+</section>
+<section class="panel">
+<h2>📊 C · 概率模拟器</h2><p class="muted">模拟大量随机物品抽取，观察颜色、尺寸的实际频率与理论概率。模拟结果独立于游戏局数。</p>
+<div class="fields">
+<label class="field">模拟物品数量<select id="simCount"><option value="100">100</option><option value="1000" selected>1,000</option><option value="10000">10,000</option><option value="100000">100,000</option></select></label>
+<label class="field">模拟内容<select id="simMode"><option value="color">颜色分布</option><option value="size">尺寸分布</option><option value="both">颜色 + 尺寸</option></select></label>
+</div>
+<button class="primary" id="runSim">运行模拟</button><canvas id="chart" width="650" height="260" aria-label="概率模拟直方图"></canvas>
+<div class="sim-results" id="simResults"></div><p class="note">提示：尺寸概率按当前高级设置的权重归一化。游戏摆放会受到网格空间与不重叠规则影响，因此游戏中观察到的物品比例可能与纯概率模拟不同。</p>
+</section>
+</div>
+
+<details class="settings">
+<summary>⚙️ E · 游戏规则与高级设置</summary>
+<p class="note">尺寸权重可自行修改，系统会自动归一化。初始设定：1×1 为 80%、1×2 为 15%、2×1 为 4%，剩余 1% 暂时在 2×2 与 2×3 之间各分配 0.5%。</p>
+<div class="prob-grid">
+<label>1×1 权重 (%)<input id="p11" type="number" min="0" step="0.5" value="80"></label>
+<label>1×2 权重 (%)<input id="p12" type="number" min="0" step="0.5" value="15"></label>
+<label>2×1 权重 (%)<input id="p21" type="number" min="0" step="0.5" value="4"></label>
+<label>2×2 权重 (%)<input id="p22" type="number" min="0" step="0.5" value="0.5"></label>
+<label>2×3 权重 (%)<input id="p23" type="number" min="0" step="0.5" value="0.5"></label>
+</div>
+<label class="check"><input type="checkbox" id="hardMode">挑战模式：每局开启区域消耗 10 金币（余额不足不能开启）</label>
+<label class="check"><input type="checkbox" id="autoReveal" checked>开启后自动播放物品揭晓动画</label>
+<div class="toolbar"><button class="primary" id="applyRules">应用设置并开始新一局</button></div>
+</details>
+<section class="panel" style="margin-top:16px">
+<h2>🖼️ 固定物品贴图</h2>
+<p class="fixed-art-note">物品贴图已固定：1×1 💎、1×2 📜、2×1 ⚔️、2×2 🧰、2×3 🏆。每种尺寸始终使用同一贴图，本版本不提供修改入口。</p>
+</section>
+<footer>进度保存在当前浏览器的本地存储中。清除浏览器网站数据会删除本地存档。</footer>
+</main>
+<div class="king-overlay" id="kingOverlay" role="dialog" aria-modal="true" aria-label="谁是运气王模式">
+  <div class="king-modal">
+    <div class="king-head"><div><h1 style="margin:0">👑 谁是运气王</h1><p class="muted" style="margin:6px 0 0">每局只能选一个区域；揭晓后比较四区分数，共 10 局。</p></div><div class="mode-buttons"><button class="primary" id="kingNext" disabled>下一局</button><button class="danger" id="closeKingMode">退出模式</button></div></div>
+    <div class="stats">
+      <div class="stat"><strong id="kingRound">1 / 10</strong><small>当前局数</small></div>
+      <div class="stat"><strong id="kingTotal">0</strong><small>运气王积分</small></div>
+    </div>
+    <div class="king-cards" id="kingCards"></div>
+    <div class="king-result" id="kingResult">请选择 A、B、C、D 中的一个区域。选定后不能更改。</div>
+    <div class="toolbar"><button class="secondary" id="kingRestart" style="display:none">再玩一次</button></div>
+    <p class="fixed-art-note">计分规则：所选区域并列最高得 2 分；若非最高但并列第二得 1 分；其余得 0 分。每次选择后才会揭晓四区得分。</p>
+  </div>
+</div>
+<div class="king-overlay" id="transformOverlay" role="dialog" aria-modal="true" aria-label="移形换影模式">
+ <div class="king-modal">
+  <div class="king-head"><div><h1 style="margin:0">🪄 移形换影</h1><p class="muted" style="margin:6px 0 0">2×2 方格里有五种固定物品贴图，允许重复。选择任意两个方格，观察图标融合。</p></div><button class="danger" id="closeTransformMode">退出模式</button></div>
+  <div class="stats">
+   <div class="stat"><strong id="transformPicks">0 / 2</strong><small>已选择次数</small></div>
+   <div class="stat"><strong id="transformStatus">等待选择</strong><small>融合状态</small></div>
+  </div>
+  <div id="transformBoard" class="transform-grid"></div>
+  <div class="king-result" id="transformResult">请选择 2×2 区域中的两个方格。每个方格只能选一次。</div>
+  <h3 style="margin:16px 0 8px">🔗 两两融合图鉴（10 种组合）</h3><div class="fixed-art-note">五种物品任意取两种、不重复配对，共 10 种组合；选择完成后会高亮对应组合。</div><div class="fusion-library" id="fusionLibrary"></div>
+  <div class="toolbar"><button class="primary" id="transformReset">重新生成 2×2 区域</button></div>
+ </div>
+</div>
+<script>
+const COLORS=[
+ {key:'white',name:'白色',weight:50,points:1,hex:'#f2f4f8'},
+ {key:'green',name:'绿色',weight:30,points:3,hex:'#36c982'},
+ {key:'purple',name:'紫色',weight:15,points:8,hex:'#9a70f4'},
+ {key:'gold',name:'金色',weight:5,points:20,hex:'#f2c34f'}
+];
+let sizeOptions=[
+ {name:'1×1',w:1,h:1,weight:80},{name:'1×2',w:1,h:2,weight:15},
+ {name:'2×1',w:2,h:1,weight:4},{name:'2×2',w:2,h:2,weight:.5},
+ {name:'2×3',w:2,h:3,weight:.5}
+];
+const SHOP=[
+ {id:'lucky',name:'幸运加成',cost:80,desc:'永久生效：每局结算额外获得 10% 积分。',type:'permanent'},
+ {id:'reroll',name:'重新抽取券',cost:35,desc:'每张可在开启前重生成一个未开启区域。',type:'consumable'},
+ {id:'boost',name:'颜色加成',cost:60,desc:'下一局紫色、金色物品的抽取权重提升。',type:'consumable'},
+ {id:'peek',name:'预览券',cost:25,desc:'下一局可提前查看一个区域的物品数量。',type:'consumable'}
+];
+let areas=[],selected=-1,totalScore=0,coins=100,roundCount=0,bestScore=0,history=[],inventory={reroll:0,boost:0,peek:0,lucky:0},roundUsedPeek=false;
+const $=id=>document.getElementById(id), letters=['A','B','C','D'];
+// 固定贴图映射：每种尺寸永久对应同一图案。
+const SIZE_ART={'1×1':'💎','1×2':'📜','2×1':'⚔️','2×2':'🧰','2×3':'🏆'};
+let kingMode={active:false,round:1,total:0,boards:[],chosen:-1,finished:false};
+let openedSerial=0;
+let pinnedOpenedArea=-1;
+let transformMode={items:[],picked:[],fused:false};
+function pick(list){let total=list.reduce((s,x)=>s+x.weight,0);if(total<=0)return list[0];let r=Math.random()*total;for(const x of list){r-=x.weight;if(r<0)return x;}return list[list.length-1];}
+function emptyBoard(){return Array.from({length:5},()=>Array(5).fill(null));}
+function canPlace(b,x,y,w,h){if(x+w>5||y+h>5)return false;for(let yy=y;yy<y+h;yy++)for(let xx=x;xx<x+w;xx++)if(b[yy][xx])return false;return true;}
+function generateArea(){
+ const board=emptyBoard(),items=[];let serial=1,failures=0;
+ while(failures<45){
+  const size=pick(sizeOptions);
+  let colorWeights=COLORS.map(c=>({...c}));
+  if(inventory.boost>0){colorWeights.find(c=>c.key==='purple').weight*=2;colorWeights.find(c=>c.key==='gold').weight*=2;}
+  const color=pick(colorWeights),spots=[];
+  for(let y=0;y<5;y++)for(let x=0;x<5;x++)if(canPlace(board,x,y,size.w,size.h))spots.push({x,y});
+  if(!spots.length){failures++;continue;}
+  const p=spots[Math.floor(Math.random()*spots.length)];
+  const item={id:serial++,x:p.x,y:p.y,w:size.w,h:size.h,color:color.key,colorName:color.name,points:color.points,sizeName:size.name};
+  for(let yy=p.y;yy<p.y+item.h;yy++)for(let xx=p.x;xx<p.x+item.w;xx++)board[yy][xx]=item;
+  items.push(item);failures=0;
+ }
+ return {items,opened:false,score:items.reduce((sum,it)=>sum+it.points*it.w*it.h,0),peeked:false,animateReveal:false};
+}
+function saveState(){
+ const state={totalScore,coins,roundCount,bestScore,history,inventory,sizeOptions,hardMode:$('hardMode').checked,autoReveal:$('autoReveal').checked};
+ try{localStorage.setItem('fourColorTreasureSave',JSON.stringify(state));}catch(e){}
+}
+function loadState(){
+ try{
+  const s=JSON.parse(localStorage.getItem('fourColorTreasureSave')||'null');if(!s)return false;
+  totalScore=s.totalScore||0;coins=s.coins??100;roundCount=s.roundCount||0;bestScore=s.bestScore||0;history=s.history||[];
+  inventory={...inventory,...(s.inventory||{})};
+  if(Array.isArray(s.sizeOptions)&&s.sizeOptions.length===5)sizeOptions=s.sizeOptions;
+  $('hardMode').checked=!!s.hardMode;$('autoReveal').checked=s.autoReveal!==false;
+  ['p11','p12','p21','p22','p23'].forEach((id,i)=>$(id).value=sizeOptions[i].weight);
+  return true;
+ }catch(e){return false;}
+}
+function newRound(){
+ areas=[0,1,2,3].map(generateArea);selected=-1;roundUsedPeek=false;
+ // Color boost applies only to the next round's generated boards.
+ if(inventory.boost>0)inventory.boost--;
+ render();saveState();$('result').textContent='新的一局开始了！选择区域并开启宝藏。';
+}
+function render(){
+ const root=$('areas');root.innerHTML='';
+ areas.map((area,i)=>({area,i})).sort((a,b)=>{if(pinnedOpenedArea>=0){if(a.i===pinnedOpenedArea)return -1;if(b.i===pinnedOpenedArea)return 1;}const ao=a.area.opened,bo=b.area.opened;if(!ao&&!bo)return a.i-b.i;if(ao&&bo)return (a.area.openedOrder||0)-(b.area.openedOrder||0);return ao?1:-1;}).forEach(({area,i})=>{
+  const card=document.createElement('article');
+  card.className='area-card'+(selected===i?' selected':'')+(area.opened?' opened':'');
+  let label=area.opened?'已开启':(selected===i?'已选择':'神秘区域');
+  let desc=area.opened?`${area.items.length} 件物品 · 获得 ${area.score} 分`:area.peeked?`预览：${area.items.length} 件物品`:'5×5 网格 · 内容尚未揭晓';
+  card.innerHTML=`<h2>区域 ${letters[i]} <span class="badge">${label}</span></h2><div class="desc">${desc}</div><div class="grid"></div>`;
+  const grid=card.querySelector('.grid');for(let n=0;n<25;n++){let cell=document.createElement('div');cell.className='cell';grid.appendChild(cell);}
+  area.items.forEach((item,j)=>{
+   const revealed=area.opened;
+   const el=document.createElement('div');el.className='item '+(revealed?item.color:'hidden');
+   el.style.gridColumn=`${item.x+1} / span ${item.w}`;el.style.gridRow=`${item.y+1} / span ${item.h}`;el.style.zIndex='2';
+   el.title=revealed?`${item.colorName} ${item.sizeName}`:'神秘物品';
+   if(revealed){
+    el.innerHTML=`<span class="item-art">${SIZE_ART[item.sizeName]||'🎁'}<small>${item.sizeName}</small></span>`;
+    if(area.animateReveal && $('autoReveal').checked){el.classList.add('reveal');el.style.animationDelay=(j*35)+'ms';}
+   }
+   grid.appendChild(el);
+  });
+  card.addEventListener('click',()=>{if(area.opened)return;selected=i;render();});
+  root.appendChild(card);
+  if(area.animateReveal) area.animateReveal=false;
+ });
+ pinnedOpenedArea=-1;
+ $('openBtn').disabled=selected<0||areas[selected]?.opened||( $('hardMode').checked&&coins<10);
+ $('totalScore').textContent=totalScore;$('coins').textContent=coins;$('roundCount').textContent=roundCount;$('bestScore').textContent=bestScore;
+ const a=selected>=0?areas[selected]:null;
+ $('inventory').innerHTML=inventoryHTML();$('owned').innerHTML=inventoryHTML();
+ $('history').innerHTML=history.length?history.slice(0,12).map(x=>`<div>${escapeHTML(x)}</div>`).join(''):'暂无记录';
+}
+function inventoryHTML(){
+ const names={reroll:'重新抽取券',boost:'颜色加成',peek:'预览券',lucky:'永久幸运加成'};
+ return Object.keys(inventory).filter(k=>inventory[k]>0).map(k=>`<span class="pill">${names[k]} × ${inventory[k]}</span>`).join('')||'<span class="muted">暂无道具</span>';
+}
+function escapeHTML(s){return String(s).replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));}
+function openSelected(){
+ if(selected<0||areas[selected].opened)return;
+ if($('hardMode').checked){if(coins<10){$('result').textContent='金币不足！请先在商店购买或关闭挑战模式。';return;}coins-=10;}
+ const a=areas[selected];a.opened=true;a.openedOrder=++openedSerial;a.animateReveal=true;pinnedOpenedArea=selected;
+ a.score=a.items.reduce((sum,it)=>sum+it.points*it.w*it.h,0);
+ const bonus=inventory.lucky>0?Math.floor(a.score*.1):0;const finalScore=a.score+bonus;
+ totalScore+=finalScore;roundCount++;bestScore=Math.max(bestScore,finalScore);
+ const earned=Math.floor(finalScore/10);coins+=earned;
+ const counts={white:0,green:0,purple:0,gold:0};a.items.forEach(it=>counts[it.color]++);
+ const covered=a.items.reduce((s,it)=>s+it.w*it.h,0);
+ const golds=a.items.filter(it=>it.color==='gold');
+ $('result').innerHTML=`<b>🎉 区域 ${letters[selected]} 开启成功！</b><br><span class="big">+${finalScore} 分</span>${bonus?`（含幸运加成 +${bonus}）`:''}<br>物品 ${a.items.length} 件 · 占格 ${covered}/25<br>白 ${counts.white} · 绿 ${counts.green} · 紫 ${counts.purple} · 金 ${counts.gold}<br>获得 ${earned} 金币${$('hardMode').checked?'（已扣除 10 金币开箱费）':''}${golds.length?'<br><b style="color:#ffdb68">✨ 稀有金色物品出现！恭喜获得稀有宝藏！</b>':''}<br>${finalScore>=180?'欧气爆棚！收获极其丰厚！':finalScore>=100?'运气不错，收获颇丰！':'宝藏已收入囊中，下一局再接再厉！'}`;
+ history.unshift(`第 ${roundCount} 局 · 区域 ${letters[selected]}：${finalScore} 分，+${earned} 金币${golds.length?'，发现金色物品':''}`);
+ render();renderShop();saveState();
+}
+function renderShop(){
+ $('shop').innerHTML=SHOP.map(s=>{
+  let owned=inventory[s.id]||0;
+  return `<div class="shop-item"><strong>${s.name} · ${s.cost} 金币</strong><p>${s.desc}${s.type==='permanent'?' 当前拥有：'+owned+' 级':''}</p><button class="secondary" data-buy="${s.id}" ${coins<s.cost?'disabled':''}>${s.type==='permanent'?'购买/升级':'购买'}</button></div>`;
+ }).join('');
+ $('shop').querySelectorAll('[data-buy]').forEach(b=>b.addEventListener('click',()=>buyItem(b.dataset.buy)));
+}
+function buyItem(id){
+ const item=SHOP.find(s=>s.id===id);if(!item||coins<item.cost)return;
+ coins-=item.cost;inventory[id]=(inventory[id]||0)+1;
+ $('result').textContent=`购买成功：${item.name}。${item.type==='permanent'?'永久效果已提升。':'道具已放入库存。'}`;
+ render();renderShop();saveState();
+}
+function useItem(id){
+ if(!inventory[id]||inventory[id]<=0)return false;
+ inventory[id]--;return true;
+}
+function useReroll(){
+ if(selected<0||areas[selected].opened){$('result').textContent='请先选择一个尚未开启的区域，再使用重新抽取券。';return;}
+ if(!useItem('reroll')){$('result').textContent='你没有重新抽取券，可以在商店购买。';return;}
+ areas[selected]=generateArea();$('result').textContent=`区域 ${letters[selected]} 已重新生成！`;render();renderShop();saveState();
+}
+function usePeek(){
+ if(selected<0||areas[selected].opened){$('result').textContent='请先选择一个尚未开启的区域。';return;}
+ if(!useItem('peek')){$('result').textContent='你没有预览券，可以在商店购买。';return;}
+ areas[selected].peeked=true;$('result').textContent=`预览结果：区域 ${letters[selected]} 内有 ${areas[selected].items.length} 件物品，但颜色和具体布局仍然保密。`;
+ render();renderShop();saveState();
+}
+
+function kingGenerateBoards(){
+ kingMode.boards=[0,1,2,3].map(()=>{const a=generateArea();a.score=a.items.reduce((sum,it)=>sum+it.points*it.w*it.h,0);return a;});
+ kingMode.chosen=-1;
+}
+function kingRender(){
+ $('kingRound').textContent=kingMode.finished?'10 / 10':`${kingMode.round} / 10`;
+ $('kingTotal').textContent=kingMode.total;
+ const root=$('kingCards');root.innerHTML='';
+ kingMode.boards.forEach((a,i)=>{
+  const b=document.createElement('button');
+  b.className='king-card'+(kingMode.chosen===i?' chosen':'');
+  b.disabled=kingMode.chosen!==-1||kingMode.finished;
+  b.innerHTML=`<div class="king-icon">${['🗝️','🧭','💰','🎁'][i]}</div><strong>区域 ${letters[i]}</strong><div class="king-score">${kingMode.chosen===-1?'???':a.score+' 分'}</div><div class="muted">${kingMode.chosen===-1?'神秘区域':(i===kingMode.chosen?'你选择的区域':'已揭晓')}</div>`;
+  b.addEventListener('click',()=>kingChoose(i));root.appendChild(b);
+ });
+ $('kingNext').disabled=kingMode.chosen===-1||kingMode.finished;
+ $('kingNext').style.display=kingMode.finished?'none':'inline-block';
+ $('kingRestart').style.display=kingMode.finished?'inline-block':'none';
+}
+function kingChoose(i){
+ if(kingMode.chosen!==-1||kingMode.finished)return;
+ kingMode.chosen=i;
+ const scores=kingMode.boards.map(a=>a.score),chosenScore=scores[i];
+ const sorted=[...scores].sort((a,b)=>b-a);
+ let earned=0;
+ if(chosenScore===sorted[0])earned=2;
+ else if(chosenScore===sorted[1])earned=1;
+ kingMode.total+=earned;
+ const ranking=scores.map((score,index)=>({score,index})).sort((a,b)=>b.score-a.score)
+  .map((x,rank)=>`区域 ${letters[x.index]}：${x.score} 分${x.index===i?'（你选的）':''}`).join('<br>');
+ $('kingResult').innerHTML=`你选择了 <b>区域 ${letters[i]}</b>，获得 <b>${chosenScore} 分</b>。<br>本局积分：<span class="big">+${earned}</span><br><br><b>四区排名</b><br>${ranking}`;
+ if(kingMode.round===10){
+  kingMode.finished=true;
+  let message='';
+  if(kingMode.total===0)message='不要灰心丧气';
+  else if(kingMode.total<=5)message='加油！';
+  else if(kingMode.total<=10)message='厉害666';
+  else if(kingMode.total<=15)message='运气小王子';
+  else if(kingMode.total<=19)message='天降鸿运';
+  else message='恭喜你运气王！';
+  $('kingResult').innerHTML+=`<div class="king-final">${message}</div><b>10 局结束！最终总积分：${kingMode.total} / 20</b>`;
+ }
+ kingRender();
+}
+function kingNextRound(){
+ if(kingMode.chosen===-1||kingMode.finished)return;
+ kingMode.round++;kingGenerateBoards();
+ $('kingResult').textContent='新的一局开始！请选择一个区域。选定后将揭晓全部四区分数。';
+ kingRender();
+}
+function startKingMode(){
+ kingMode={active:true,round:1,total:0,boards:[],chosen:-1,finished:false};
+ kingGenerateBoards();$('kingOverlay').classList.add('active');
+ $('kingResult').textContent='请选择 A、B、C、D 中的一个区域。选定后不能更改。';
+ kingRender();
+}
+function closeKingMode(){$('kingOverlay').classList.remove('active');kingMode.active=false;}
+
+
+
+const FUSION_RESULTS=[
+ {a:'1×1',b:'1×2',icon:'🌌',name:'星卷之门',desc:'钻石与卷轴融合，开启星辰秘门。'},
+ {a:'1×1',b:'2×1',icon:'⚡',name:'雷霆宝刃',desc:'钻石与宝剑融合，化作雷光武器。'},
+ {a:'1×1',b:'2×2',icon:'🔮',name:'晶核宝匣',desc:'钻石与宝箱融合，凝成魔法晶核。'},
+ {a:'1×1',b:'2×3',icon:'👑',name:'王冠之心',desc:'钻石与奖杯融合，形成荣耀王冠。'},
+ {a:'1×2',b:'2×1',icon:'🗡️',name:'符文剑卷',desc:'卷轴与宝剑融合，生成符文之刃。'},
+ {a:'1×2',b:'2×2',icon:'📦',name:'秘藏典籍',desc:'卷轴与宝箱融合，化为封印秘藏。'},
+ {a:'1×2',b:'2×3',icon:'📯',name:'荣耀圣卷',desc:'卷轴与奖杯融合，记录胜利传说。'},
+ {a:'2×1',b:'2×2',icon:'🛡️',name:'守护圣器',desc:'宝剑与宝箱融合，生成守护圣器。'},
+ {a:'2×1',b:'2×3',icon:'🏹',name:'冠军战徽',desc:'宝剑与奖杯融合，化为冠军战徽。'},
+ {a:'2×2',b:'2×3',icon:'💠',name:'秘宝核心',desc:'宝箱与奖杯融合，形成稀有秘宝核心。'}
+];
+function fusionKey(a,b){return [a,b].sort().join('|');}
+function renderFusionLibrary(){
+ const root=$('fusionLibrary');root.innerHTML='';
+ FUSION_RESULTS.forEach(item=>{
+  const active=transformMode.fused&&transformMode.picked.length===2&&fusionKey(transformMode.picked[0].type,transformMode.picked[1].type)===fusionKey(item.a,item.b);
+  const el=document.createElement('div');el.className='fusion-entry';el.style.borderColor=active?'#ffe17c':'';
+  el.innerHTML=`<span class="fusion-symbol">${item.icon}</span><div><b>${item.name}</b><small>${SIZE_ART[item.a]} ${item.a} + ${SIZE_ART[item.b]} ${item.b}<br>${item.desc}</small></div>`;
+  root.appendChild(el);
+ });
+}
+function transformGenerate(){
+ const types=Object.keys(SIZE_ART);
+ transformMode={items:Array.from({length:4},()=>types[Math.floor(Math.random()*types.length)]),picked:[],fused:false,revealed:[]};
+ transformRender();
+}
+function transformRender(){
+ $('transformPicks').textContent=`${transformMode.picked.length} / 2`;
+ $('transformStatus').textContent=transformMode.fused?'已融合':'等待选择';
+ const root=$('transformBoard');root.className=transformMode.fused?'transform-result':'transform-grid';root.innerHTML='';
+ if(transformMode.fused){
+  const pickedTypes=transformMode.picked.map(x=>x.type);
+  const match=FUSION_RESULTS.find(item=>fusionKey(item.a,item.b)===fusionKey(pickedTypes[0],pickedTypes[1]));
+  const icon=document.createElement('span');icon.className='fused-icon';icon.textContent=match?match.icon:'✨';icon.title=match?match.name:'神秘融合';
+  root.appendChild(icon);
+  $('transformResult').innerHTML=`✨ 两次选择完成：${transformMode.picked.map(x=>SIZE_ART[x.type]+' '+x.type).join(' + ')}<br><b>${match?match.name:'神秘融合'}</b>：${match?match.desc:'相同物品融合成一道强化光芒。'}<br>四个小方格已清空，融合图标已放大并占据整个 2×2 区域。`;
+  renderFusionLibrary();return;
+ }
+ transformMode.items.forEach((type,index)=>{
+  const b=document.createElement('button');const picked=transformMode.picked.some(x=>x.index===index);
+  b.className='transform-cell'+(picked?' picked':'');
+  b.disabled=picked||transformMode.picked.length>=2;
+  // Hidden cells show a question mark until the player selects them.
+  b.innerHTML=`<span>${picked?SIZE_ART[type]:'❔'}</span><small>${picked?type:'未知物品'}</small>`;
+  b.addEventListener('click',()=>transformChoose(index));root.appendChild(b);
+ });
+ $('transformResult').textContent=transformMode.picked.length===0?'四个方格暂时都是问号。请选择一个，打开后才会显示物品。':`已揭晓第 ${transformMode.picked.length} 个物品：${SIZE_ART[transformMode.picked[transformMode.picked.length-1].type]} ${transformMode.picked[transformMode.picked.length-1].type}。请再选择一个方格。`;
+ renderFusionLibrary();
+}
+function transformChoose(index){
+ if(transformMode.fused||transformMode.picked.some(x=>x.index===index)||transformMode.picked.length>=2)return;
+ transformMode.picked.push({index,type:transformMode.items[index]});
+ if(transformMode.picked.length===2)transformMode.fused=true;
+ transformRender();
+}
+function startTransformMode(){
+ $('transformOverlay').classList.add('active');transformGenerate();
+}
+function closeTransformMode(){$('transformOverlay').classList.remove('active');}
+
+function runSimulation(){
+ const n=Number($('simCount').value),mode=$('simMode').value;
+ const sizeList=sizeOptions.map(x=>({...x}));const colors=COLORS.map(x=>({...x}));
+ const result={color:colors.map(x=>({name:x.name,weight:x.weight,count:0,hex:x.hex})),size:sizeList.map(x=>({name:x.name,weight:x.weight,count:0,hex:'#8f82ff'}))};
+ for(let i=0;i<n;i++){
+  if(mode!=='size')result.color[pickIndex(result.color.map(x=>x.weight))].count++;
+  if(mode!=='color')result.size[pickIndex(result.size.map(x=>x.weight))].count++;
+ }
+ let series=[];
+ if(mode!=='size')series.push({title:'颜色',items:result.color});
+ if(mode!=='color')series.push({title:'尺寸',items:result.size});
+ drawChart(series,n);
+ $('simResults').innerHTML=series.map(s=>`<div class="stat" style="grid-column:1/-1"><strong>${s.title}模拟结果</strong><small>${s.items.map(x=>`${x.name} ${x.count}次（${(x.count/n*100).toFixed(2)}% / 理论 ${(x.weight/s.items.reduce((a,b)=>a+b.weight,0)*100).toFixed(2)}%）`).join(' · ')}</small></div>`).join('');
+}
+function pickIndex(weights){const sum=weights.reduce((a,b)=>a+b,0);let r=Math.random()*sum;for(let i=0;i<weights.length;i++){r-=weights[i];if(r<0)return i;}return weights.length-1;}
+function drawChart(series,n){
+ const c=$('chart'),ctx=c.getContext('2d'),w=c.width,h=c.height;ctx.clearRect(0,0,w,h);
+ ctx.fillStyle='#101727';ctx.fillRect(0,0,w,h);
+ if(!series.length)return;
+ const all=series.flatMap(s=>s.items.map(x=>({...x,group:s.title,total:s.items.reduce((a,b)=>a+b.weight,0)})));
+ const pad={l:38,r:12,t:20,b:50},chartW=w-pad.l-pad.r,chartH=h-pad.t-pad.b;
+ ctx.strokeStyle='#35425e';ctx.fillStyle='#aab6d0';ctx.font='11px sans-serif';ctx.textAlign='right';
+ for(let k=0;k<=4;k++){let y=pad.t+chartH*k/4;ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(w-pad.r,y);ctx.stroke();ctx.fillText((100-25*k)+'%',pad.l-6,y+4);}
+ const bw=chartW/all.length*.65,gap=chartW/all.length;
+ all.forEach((it,i)=>{
+  const actual=it.count/n*100,expected=it.weight/it.total*100;
+  const x=pad.l+i*gap+(gap-bw)/2,barH=actual/100*chartH,y=pad.t+chartH-barH;
+  ctx.fillStyle=it.hex;ctx.fillRect(x,y,bw,barH);
+  const ey=pad.t+chartH-expected/100*chartH;ctx.strokeStyle='#fff2a6';ctx.setLineDash([3,2]);ctx.beginPath();ctx.moveTo(x-2,ey);ctx.lineTo(x+bw+2,ey);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle='#dfe5f5';ctx.textAlign='center';ctx.font='10px sans-serif';ctx.fillText(it.name,x+bw/2,h-29);
+  ctx.fillStyle='#9eabc5';ctx.fillText(actual.toFixed(1)+'%',x+bw/2,h-15);
+ });
+ ctx.textAlign='left';ctx.fillStyle='#dce2f3';ctx.font='11px sans-serif';ctx.fillText('柱形 = 实际频率；虚线 = 理论概率',pad.l,pad.t-6);
+}
+$('openBtn').addEventListener('click',openSelected);
+$('openKingMode').addEventListener('click',startKingMode);
+$('closeKingMode').addEventListener('click',closeKingMode);
+$('kingNext').addEventListener('click',kingNextRound);
+$('kingRestart').addEventListener('click',startKingMode);
+$('openTransformMode').addEventListener('click',startTransformMode);
+$('closeTransformMode').addEventListener('click',closeTransformMode);
+$('transformReset').addEventListener('click',transformGenerate);
+$('newRound').addEventListener('click',newRound);
+$('saveNow').addEventListener('click',()=>{saveState();$('result').textContent='已保存到当前浏览器。';});
+$('resetAll').addEventListener('click',()=>{
+ if(!confirm('确定重置全部进度、金币、积分、道具和历史记录吗？此操作无法撤销。'))return;
+ localStorage.removeItem('fourColorTreasureSave');totalScore=0;coins=100;roundCount=0;bestScore=0;history=[];inventory={reroll:0,boost:0,peek:0,lucky:0};newRound();renderShop();$('result').textContent='进度已重置，赠送 100 初始金币。';
+});
+$('runSim').addEventListener('click',runSimulation);
+$('applyRules').addEventListener('click',()=>{
+ const fields=[['p11',1,1],['p12',1,2],['p21',2,1],['p22',2,2],['p23',2,3]];
+ const next=fields.map(([id,w,h])=>({name:`${w}×${h}`,w,h,weight:Math.max(0,Number($(id).value)||0)}));
+ if(next.every(x=>x.weight===0)){alert('至少一个尺寸的权重需要大于 0。');return;}
+ sizeOptions=next;newRound();renderShop();saveState();$('result').textContent='设置已应用，新的一局已生成。';
+});
+$('hardMode').addEventListener('change',()=>{render();saveState();});
+$('autoReveal').addEventListener('change',()=>{render();saveState();});
+document.addEventListener('keydown',e=>{
+ if(e.key==='Enter'&&selected>=0&&!areas[selected]?.opened)openSelected();
+ if(e.key.toLowerCase()==='r')useReroll();
+});
+const loaded=loadState();newRound();renderShop();
+if(loaded){$('result').textContent='已读取本地存档。积分、金币、道具、概率设置和历史记录已恢复；当前局已重新生成。';}
+$('simMode').addEventListener('change',()=>{});
+</script>
+</body>
+</html>
